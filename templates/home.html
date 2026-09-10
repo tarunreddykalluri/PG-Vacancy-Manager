@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Home - PG Vacancy Manager{% endblock %}
+
+{% block content %}
+
+<h2>Available Vacancies</h2>
+
+<p>Currently available beds across all PG buildings.</p>
+
+<div class="page-actions">
+
+    <a
+        href="{{ url_for('buildings.buildings') }}"
+        class="btn btn-secondary"
+    >
+        Manage Buildings
+    </a>
+
+    <a
+        href="{{ url_for('tenants.tenants') }}"
+        class="btn btn-secondary"
+    >
+        Active Tenants
+    </a>
+
+</div>
+
+
+{% if vacant_beds %}
+
+    {% set current_sharing = namespace(value=0) %}
+
+    {% for bed in vacant_beds %}
+
+        {% if current_sharing.value != bed.room.sharing_type %}
+
+            {% set current_sharing.value = bed.room.sharing_type %}
+
+            <h3 style="margin-top: 30px;">
+
+                {% if bed.room.sharing_type == 1 %}
+                    Single Sharing
+                {% else %}
+                    {{ bed.room.sharing_type }} Sharing
+                {% endif %}
+
+            </h3>
+
+        {% endif %}
+
+
+        <div class="card">
+
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 15px;
+            ">
+
+                <div>
+
+                    <h3 style="margin: 0 0 8px 0;">
+                        Room {{ bed.room.room_number }}
+                    </h3>
+
+                    <p style="margin: 0;">
+                        {{ bed.room.building.name }}
+                        &nbsp;•&nbsp;
+                        Bed {{ bed.bed_number }}
+                    </p>
+
+                </div>
+
+
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                ">
+
+                    <span class="badge badge-vacant">
+                        VACANT
+                    </span>
+
+                    <a
+                        href="{{ url_for('tenants.add_tenant', bed_id=bed.id) }}"
+                        class="btn btn-primary"
+                    >
+                        Register Tenant
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    {% endfor %}
+
+
+{% else %}
+
+    <div class="empty-state">
+
+        <h3>No vacancies available</h3>
+
+        <p>
+            All beds are currently occupied, or no rooms have been added yet.
+        </p>
+
+        <a
+            href="{{ url_for('buildings.buildings') }}"
+            class="btn btn-primary"
+        >
+            Manage Buildings
+        </a>
+
+    </div>
+
+{% endif %}
+
+{% endblock %}

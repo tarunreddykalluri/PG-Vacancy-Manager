@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}{{ building.name }} - PG Vacancy Manager{% endblock %}
+
+{% block content %}
+
+<h2>{{ building.name }}</h2>
+
+{% if building.address %}
+    <p>{{ building.address }}</p>
+{% endif %}
+
+<div class="page-actions">
+
+    <a
+        href="{{ url_for('rooms.add_room', building_id=building.id) }}"
+        class="btn btn-primary"
+    >
+        + Add Room
+    </a>
+
+    <a
+        href="{{ url_for('buildings.buildings') }}"
+        class="btn btn-secondary"
+    >
+        Back to Buildings
+    </a>
+
+</div>
+
+
+<div class="grid">
+
+    <div class="card">
+        <h3>Total Rooms</h3>
+        <h2>{{ total_rooms }}</h2>
+    </div>
+
+    <div class="card">
+        <h3>Total Beds</h3>
+        <h2>{{ total_beds }}</h2>
+    </div>
+
+    <div class="card">
+        <h3>Occupied</h3>
+        <h2>{{ occupied_beds }}</h2>
+    </div>
+
+    <div class="card">
+        <h3>Vacant</h3>
+        <h2>{{ vacant_beds }}</h2>
+    </div>
+
+</div>
+
+
+<div class="card">
+
+    <h3>Vacancy Summary</h3>
+
+    {% if total_beds > 0 %}
+
+        <p>
+            {{ vacant_beds }} of {{ total_beds }} beds are currently vacant.
+        </p>
+
+        <p>
+            Vacancy: {{ vacancy_percentage }}%
+        </p>
+
+    {% else %}
+
+        <p>
+            No beds have been added yet.
+        </p>
+
+    {% endif %}
+
+</div>
+
+
+{% if building.rooms %}
+
+    <h2>Rooms</h2>
+
+    {% for room in building.rooms %}
+
+        {% set room_occupied = namespace(count=0) %}
+
+        {% for bed in room.beds %}
+
+            {% if bed.is_occupied %}
+                {% set room_occupied.count = room_occupied.count + 1 %}
+            {% endif %}
+
+        {% endfor %}
+
+        {% set room_vacant = room.beds|length - room_occupied.count %}
+
+        <div class="card">
+
+            <h3>
+                Room {{ room.room_number }}
+            </h3>
+
+            <p>
+                {% if room.sharing_type == 1 %}
+                    Single Sharing
+                {% else %}
+                    {{ room.sharing_type }} Sharing
+                {% endif %}
+            </p>
+
+            <p>
+                Occupied:
+                {{ room_occupied.count }}/{{ room.beds|length }}
+                &nbsp; • &nbsp;
+                Vacant:
+                {{ room_vacant }}
+            </p>
+
+            <div class="grid">
+
+                {% for bed in room.beds %}
+
+                    <div class="card">
+
+                        <h4>
+                            Bed {{ bed.bed_number }}
+                        </h4>
+
+                        {% if bed.is_occupied %}
+
+                            <span class="badge badge-occupied">
+                                OCCUPIED
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge badge-vacant">
+                                VACANT
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    {% endfor %}
+
+{% else %}
+
+    <div class="empty-state">
+
+        <h3>No rooms yet</h3>
+
+        <p>
+            Add the first room to this building.
+        </p>
+
+        <a
+            href="{{ url_for('rooms.add_room', building_id=building.id) }}"
+            class="btn btn-primary"
+        >
+            + Add Room
+        </a>
+
+    </div>
+
+{% endif %}
+
+{% endblock %}

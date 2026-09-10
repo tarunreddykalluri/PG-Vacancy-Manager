@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Tenants - PG Vacancy Manager{% endblock %}
+
+{% block content %}
+
+<h2>Active Tenants</h2>
+
+<p>Currently registered tenants.</p>
+
+<form method="GET" class="card">
+
+    <div class="form-group">
+
+        <label for="search">
+            Search Tenant
+        </label>
+
+        <input
+            type="text"
+            id="search"
+            name="search"
+            value="{{ search }}"
+            placeholder="Name, phone, PG or room number"
+        >
+
+    </div>
+
+    <div class="page-actions">
+
+        <button type="submit" class="btn btn-primary">
+            Search
+        </button>
+
+        <a
+            href="{{ url_for('tenants.tenants') }}"
+            class="btn btn-secondary"
+        >
+            Clear
+        </a>
+
+    </div>
+
+</form>
+
+{% if tenants %}
+
+    {% for tenant in tenants %}
+
+    <div class="card">
+
+        <h3>{{ tenant.name }}</h3>
+
+        <p>
+            Phone: {{ tenant.phone }}
+        </p>
+
+        <p>
+            PG:
+            {{ tenant.pg_name if tenant.pg_name else '-' }}
+        </p>
+
+        <p>
+            Joined:
+            {{ tenant.joining_date.strftime('%d-%m-%Y') if tenant.joining_date else '-' }}
+        </p>
+
+        <p>
+            Room {{ tenant.bed.room.room_number }}
+            •
+            Bed {{ tenant.bed.bed_number }}
+            •
+            {{ tenant.bed.room.building.name }}
+        </p>
+
+        <div class="page-actions">
+
+            <span class="badge badge-occupied">
+                OCCUPIED
+            </span>
+
+            <form
+                method="POST"
+                action="{{ url_for('tenants.vacate_tenant', tenant_id=tenant.id) }}"
+                onsubmit="return confirm('Are you sure you want to vacate this tenant?');"
+            >
+
+                <button
+                    type="submit"
+                    class="btn btn-danger"
+                >
+                    VACATE
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+{% else %}
+
+    <div class="empty-state">
+
+        <h3>No tenants found</h3>
+
+        {% if search %}
+            <p>No active tenant matches "{{ search }}".</p>
+        {% else %}
+            <p>Tenants will appear here after registration.</p>
+        {% endif %}
+
+    </div>
+
+{% endif %}
+
+{% endblock %}

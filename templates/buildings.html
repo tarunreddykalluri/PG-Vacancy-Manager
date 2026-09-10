@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Buildings - PG Vacancy Manager{% endblock %}
+
+{% block content %}
+
+<h2>Buildings</h2>
+
+<p>Manage your PG buildings and monitor their vacancy.</p>
+
+<div class="page-actions">
+
+    <a
+        href="{{ url_for('buildings.add_building') }}"
+        class="btn btn-primary"
+    >
+        + Add Building
+    </a>
+
+</div>
+
+
+{% if building_stats %}
+
+    <div class="grid">
+
+        {% for item in building_stats %}
+
+        <div class="card">
+
+            <h3>
+                {{ item.building.name }}
+            </h3>
+
+            {% if item.building.address %}
+
+                <p>
+                    {{ item.building.address }}
+                </p>
+
+            {% endif %}
+
+            <div class="building-stats">
+
+                <div>
+                    <strong>{{ item.total_rooms }}</strong>
+                    <span>Rooms</span>
+                </div>
+
+                <div>
+                    <strong>{{ item.total_beds }}</strong>
+                    <span>Total Beds</span>
+                </div>
+
+                <div>
+                    <strong>{{ item.occupied_beds }}</strong>
+                    <span>Occupied</span>
+                </div>
+
+                <div>
+                    <strong>{{ item.vacant_beds }}</strong>
+                    <span>Vacant</span>
+                </div>
+
+            </div>
+
+            <p>
+                Vacancy:
+                <strong>{{ item.vacancy_percentage }}%</strong>
+            </p>
+
+            <div class="page-actions">
+
+                <a
+                    href="{{ url_for(
+                        'buildings.building_detail',
+                        building_id=item.building.id
+                    ) }}"
+                    class="btn btn-secondary"
+                >
+                    View Building
+                </a>
+
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    onclick="startDeleteCountdown(
+                        '{{ item.building.id }}',
+                        '{{ item.building.name | e }}'
+                    )"
+                >
+                    Remove Building
+                </button>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    <div class="empty-state">
+
+        <h3>No buildings added yet</h3>
+
+        <p>
+            Add your first PG building to start creating rooms.
+        </p>
+
+        <a
+            href="{{ url_for('buildings.add_building') }}"
+            class="btn btn-primary"
+        >
+            + Add Building
+        </a>
+
+    </div>
+
+{% endif %}
+
+
+<!-- Delete Confirmation Modal -->
+
+<div
+    id="deleteModal"
+    style="
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 1000;
+    "
+>
+
+    <div
+        class="card"
+        style="
+            max-width: 450px;
+            width: 100%;
+            margin: 0;
+            text-align: center;
+        "
+    >
+
+        <h2>
+            Remove Building?
+        </h2>
+
+        <p>
+            You are about to remove:
+        </p>
+
+        <h3 id="deleteBuildingName"></h3>
+
+        <p style="color: #dc2626;">
+            This action cannot be undone.
+        </p>
+
+        <p>
+            Please wait
+            <strong id="countdown">5</strong>
+            seconds before confirmation is enabled.
+        </p>
+
+        <div class="page-actions" style="justify-content: center;">
+
+            <button
+                type="button"
+                id="cancelDeleteButton"
+                class="btn btn-secondary"
+                onclick="cancelDelete()"
+            >
+                Cancel
+            </button>
+
+            <form
+                id="deleteForm"
+                method="POST"
+                style="display: inline;"
+            >
+
+                <button
+                    type="submit"
+                    id="confirmDeleteButton"
+                    class="btn btn-danger"
+                    disabled
+                >
+                    Wait 5 seconds
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+let countdownTimer = null;
+
+
+function startDeleteCountdown(buildingId, buildingName) {
+
+    const modal = document.getElementById("deleteModal");
+    const nameElement = document.getElementById("deleteBuildingName");
+    const countdownElement = document.getElementById("countdown");
+    const confirmButton = document.getElementById("confirmDeleteButton");
+    const deleteForm = document.getElementById("deleteForm");
+
+    nameElement.textContent = buildingName;
+
+    deleteForm.action =
+        "{{ url_for('buildings.delete_building', building_id=0) }}"
+        .replace("/0", "/" + buildingId);
+
+    countdownElement.textContent = "5";
+
+    confirmButton.disabled = true;
+    confirmButton.textContent = "Wait 5 seconds";
+
+    modal.style.display = "flex";
+
+    let secondsLeft = 5;
+
+    clearInterval(countdownTimer);
+
+    countdownTimer = setInterval(function() {
+
+        secondsLeft--;
+
+        countdownElement.textContent = secondsLeft;
+
+        if (secondsLeft <= 0) {
+
+            clearInterval(countdownTimer);
+
+            confirmButton.disabled = false;
+            confirmButton.textContent = "OK, Remove Building";
+
+            countdownElement.textContent = "0";
+        }
+
+    }, 1000);
+}
+
+
+function cancelDelete() {
+
+    const modal = document.getElementById("deleteModal");
+    const confirmButton = document.getElementById("confirmDeleteButton");
+
+    clearInterval(countdownTimer);
+
+    confirmButton.disabled = true;
+
+    modal.style.display = "none";
+}
+
+
+document.getElementById("deleteModal").addEventListener(
+    "click",
+    function(event) {
+
+        if (event.target === this) {
+            cancelDelete();
+        }
+
+    }
+);
+
+</script>
+
+
+{% endblock %}

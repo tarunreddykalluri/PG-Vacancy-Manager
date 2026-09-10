@@ -1,0 +1,1 @@
+console.log("PG Vacancy Manager loaded");

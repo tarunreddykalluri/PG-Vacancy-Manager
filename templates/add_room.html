@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Add Room - PG Vacancy Manager{% endblock %}
+
+{% block content %}
+
+<h2>Add Room</h2>
+
+<p>Add a room to <strong>{{ building.name }}</strong>.</p>
+
+<div class="card">
+
+    {% if error %}
+        <p style="color: #dc2626;">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST">
+
+        <div class="form-group">
+            <label for="room_number">Room Number</label>
+
+            <input
+                type="text"
+                id="room_number"
+                name="room_number"
+                placeholder="Example: 101"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="sharing_type">Sharing Type</label>
+
+            <select id="sharing_type" name="sharing_type" required>
+
+                <option value="">Select sharing</option>
+
+                <option value="1">Single Sharing</option>
+
+                <option value="2">2 Sharing</option>
+
+                <option value="3">3 Sharing</option>
+
+                <option value="4">4 Sharing</option>
+
+            </select>
+        </div>
+
+        <div class="page-actions">
+
+            <button type="submit" class="btn btn-primary">
+                Save Room
+            </button>
+
+            <a
+                href="{{ url_for('buildings.building_detail', building_id=building.id) }}"
+                class="btn btn-secondary"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

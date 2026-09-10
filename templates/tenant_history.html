@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Tenant History - PG Vacancy Manager{% endblock %}
+
+{% block content %}
+
+<h2>Tenant History</h2>
+
+<p>Previous tenants who have vacated their beds.</p>
+
+<form method="GET" class="card">
+
+    <div class="form-group">
+
+        <label for="search">
+            Search Tenant
+        </label>
+
+        <input
+            type="text"
+            id="search"
+            name="search"
+            value="{{ search }}"
+            placeholder="Name, phone, PG or room number"
+        >
+
+    </div>
+
+    <div class="page-actions">
+
+        <button type="submit" class="btn btn-primary">
+            Search
+        </button>
+
+        <a
+            href="{{ url_for('tenants.tenant_history') }}"
+            class="btn btn-secondary"
+        >
+            Clear
+        </a>
+
+    </div>
+
+</form>
+
+{% if tenants %}
+
+    {% for tenant in tenants %}
+
+    <div class="card">
+
+        <h3>{{ tenant.name }}</h3>
+
+        <p>
+            Phone: {{ tenant.phone }}
+        </p>
+
+        <p>
+            PG:
+            {{ tenant.pg_name if tenant.pg_name else '-' }}
+        </p>
+
+        <p>
+            Joined:
+            {{ tenant.joining_date.strftime('%d-%m-%Y') if tenant.joining_date else '-' }}
+        </p>
+
+        <p>
+            Vacated:
+            {{ tenant.vacating_date.strftime('%d-%m-%Y') if tenant.vacating_date else '-' }}
+        </p>
+
+        {% if tenant.bed %}
+
+        <p>
+            Previous Room {{ tenant.bed.room.room_number }}
+            •
+            Previous Bed {{ tenant.bed.bed_number }}
+            •
+            {{ tenant.bed.room.building.name }}
+        </p>
+
+        {% endif %}
+
+        <span class="badge badge-vacant">
+            VACATED
+        </span>
+
+    </div>
+
+    {% endfor %}
+
+{% else %}
+
+    <div class="empty-state">
+
+        <h3>No tenant history found</h3>
+
+        <p>
+            Vacated tenants will appear here.
+        </p>
+
+    </div>
+
+{% endif %}
+
+{% endblock %}
