@@ -193,3 +193,8 @@ p {
     font-size: 13px;
     color: #6b7280;
 }
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}

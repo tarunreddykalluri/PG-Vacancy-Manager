@@ -10,17 +10,43 @@
     <p>{{ building.address }}</p>
 {% endif %}
 
+
+{% if error %}
+
+<div
+    class="card"
+    style="
+        background: #fee2e2;
+        color: #991b1b;
+        border-left: 5px solid #dc2626;
+    "
+>
+
+    <strong>
+        {{ error }}
+    </strong>
+
+</div>
+
+{% endif %}
+
+
 <div class="page-actions">
 
     <a
-        href="{{ url_for('rooms.add_room', building_id=building.id) }}"
+        href="{{ url_for(
+            'rooms.add_room',
+            building_id=building.id
+        ) }}"
         class="btn btn-primary"
     >
         + Add Room
     </a>
 
     <a
-        href="{{ url_for('buildings.buildings') }}"
+        href="{{ url_for(
+            'buildings.buildings'
+        ) }}"
         class="btn btn-secondary"
     >
         Back to Buildings
@@ -32,23 +58,38 @@
 <div class="grid">
 
     <div class="card">
+
         <h3>Total Rooms</h3>
+
         <h2>{{ total_rooms }}</h2>
+
     </div>
 
+
     <div class="card">
+
         <h3>Total Beds</h3>
+
         <h2>{{ total_beds }}</h2>
+
     </div>
 
+
     <div class="card">
+
         <h3>Occupied</h3>
+
         <h2>{{ occupied_beds }}</h2>
+
     </div>
 
+
     <div class="card">
+
         <h3>Vacant</h3>
+
         <h2>{{ vacant_beds }}</h2>
+
     </div>
 
 </div>
@@ -61,7 +102,10 @@
     {% if total_beds > 0 %}
 
         <p>
-            {{ vacant_beds }} of {{ total_beds }} beds are currently vacant.
+            {{ vacant_beds }}
+            of
+            {{ total_beds }}
+            beds are currently vacant.
         </p>
 
         <p>
@@ -79,55 +123,103 @@
 </div>
 
 
-{% if building.rooms %}
+{% if rooms %}
 
     <h2>Rooms</h2>
 
-    {% for room in building.rooms %}
+
+    {% for room in rooms %}
 
         {% set room_occupied = namespace(count=0) %}
 
         {% for bed in room.beds %}
 
             {% if bed.is_occupied %}
-                {% set room_occupied.count = room_occupied.count + 1 %}
+
+                {% set room_occupied.count =
+                    room_occupied.count + 1
+                %}
+
             {% endif %}
 
         {% endfor %}
 
-        {% set room_vacant = room.beds|length - room_occupied.count %}
+
+        {% set room_vacant =
+            room.beds|length - room_occupied.count
+        %}
+
 
         <div class="card">
 
-            <h3>
-                Room {{ room.room_number }}
-            </h3>
+            <div
+                style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 15px;
+                    flex-wrap: wrap;
+                "
+            >
 
-            <p>
-                {% if room.sharing_type == 1 %}
-                    Single Sharing
-                {% else %}
-                    {{ room.sharing_type }} Sharing
-                {% endif %}
-            </p>
+                <div>
 
-            <p>
-                Occupied:
-                {{ room_occupied.count }}/{{ room.beds|length }}
-                &nbsp; • &nbsp;
-                Vacant:
-                {{ room_vacant }}
-            </p>
+                    <h3 style="margin: 0 0 8px 0;">
 
-            <div class="grid">
+                        Room {{ room.room_number }}
 
-                {% for bed in room.beds %}
+                    </h3>
+
+                    <p style="margin: 0;">
+
+                        {% if room.sharing_type == 1 %}
+
+                            Single Sharing
+
+                        {% else %}
+
+                            {{ room.sharing_type }} Sharing
+
+                        {% endif %}
+
+                        &nbsp; • &nbsp;
+
+                        Occupied:
+                        {{ room_occupied.count }}/{{ room.beds|length }}
+
+                        &nbsp; • &nbsp;
+
+                        Vacant:
+                        {{ room_vacant }}
+
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="{{ url_for(
+                        'rooms.edit_room',
+                        room_id=room.id
+                    ) }}"
+                    class="btn btn-secondary"
+                >
+                    Edit Room
+                </a>
+
+            </div>
+
+
+            <div class="grid" style="margin-top: 20px;">
+
+                {% for bed in room.beds|sort(attribute="bed_number") %}
 
                     <div class="card">
 
                         <h4>
                             Bed {{ bed.bed_number }}
                         </h4>
+
 
                         {% if bed.is_occupied %}
 
@@ -153,6 +245,7 @@
 
     {% endfor %}
 
+
 {% else %}
 
     <div class="empty-state">
@@ -164,7 +257,10 @@
         </p>
 
         <a
-            href="{{ url_for('rooms.add_room', building_id=building.id) }}"
+            href="{{ url_for(
+                'rooms.add_room',
+                building_id=building.id
+            ) }}"
             class="btn btn-primary"
         >
             + Add Room

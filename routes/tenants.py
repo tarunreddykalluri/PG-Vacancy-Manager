@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 from sqlalchemy import or_
-from datetime import date
+from datetime import date, timedelta
 
 from extensions import db
 from models.bed import Bed
@@ -17,7 +17,11 @@ tenants_bp = Blueprint(
 
 @tenants_bp.route("/")
 def tenants():
-    search = request.args.get("search", "").strip()
+
+    search = request.args.get(
+        "search",
+        ""
+    ).strip()
 
     query = (
         Tenant.query
@@ -27,16 +31,27 @@ def tenants():
     )
 
     if search:
+
         query = query.filter(
             or_(
-                Tenant.name.ilike(f"%{search}%"),
-                Tenant.phone.ilike(f"%{search}%"),
-                Room.room_number.ilike(f"%{search}%"),
-                Tenant.pg_name.ilike(f"%{search}%")
+                Tenant.name.ilike(
+                    f"%{search}%"
+                ),
+                Tenant.phone.ilike(
+                    f"%{search}%"
+                ),
+                Room.room_number.ilike(
+                    f"%{search}%"
+                ),
+                Tenant.pg_name.ilike(
+                    f"%{search}%"
+                )
             )
         )
 
-    tenants = query.order_by(Tenant.name).all()
+    tenants = query.order_by(
+        Tenant.name
+    ).all()
 
     return render_template(
         "tenants.html",
@@ -47,7 +62,22 @@ def tenants():
 
 @tenants_bp.route("/history")
 def tenant_history():
-    search = request.args.get("search", "").strip()
+
+    search = request.args.get(
+        "search",
+        ""
+    ).strip()
+
+    date_filter = request.args.get(
+        "date_filter",
+        "all"
+    ).strip()
+
+    selected_date = request.args.get(
+        "selected_date",
+        ""
+    ).strip()
+
 
     query = (
         Tenant.query
@@ -56,42 +86,143 @@ def tenant_history():
         .filter(Tenant.is_active == False)
     )
 
+
+    # ---------------------------------------------
+    # Search filter
+    # ---------------------------------------------
+
     if search:
+
         query = query.filter(
             or_(
-                Tenant.name.ilike(f"%{search}%"),
-                Tenant.phone.ilike(f"%{search}%"),
-                Room.room_number.ilike(f"%{search}%"),
-                Tenant.pg_name.ilike(f"%{search}%")
+                Tenant.name.ilike(
+                    f"%{search}%"
+                ),
+                Tenant.phone.ilike(
+                    f"%{search}%"
+                ),
+                Room.room_number.ilike(
+                    f"%{search}%"
+                ),
+                Tenant.pg_name.ilike(
+                    f"%{search}%"
+                )
             )
         )
 
-    tenants = query.order_by(Tenant.name).all()
+
+    # ---------------------------------------------
+    # Date filter
+    # ---------------------------------------------
+
+    today = date.today()
+
+    if date_filter == "today":
+
+        query = query.filter(
+            Tenant.vacating_date == today
+        )
+
+
+    elif date_filter == "yesterday":
+
+        yesterday = today - timedelta(
+            days=1
+        )
+
+        query = query.filter(
+            Tenant.vacating_date == yesterday
+        )
+
+
+    elif date_filter == "selected":
+
+        try:
+
+            selected_date_object = date.fromisoformat(
+                selected_date
+            )
+
+            query = query.filter(
+                Tenant.vacating_date ==
+                selected_date_object
+            )
+
+        except ValueError:
+
+            # If the selected date is invalid,
+            # don't apply a date filter.
+            date_filter = "all"
+            selected_date = ""
+
+
+    # ---------------------------------------------
+    # Newest vacated tenant first
+    # ---------------------------------------------
+
+    tenants = query.order_by(
+        Tenant.vacating_date.desc(),
+        Tenant.id.desc()
+    ).all()
+
+
+    # ---------------------------------------------
+    # Result count
+    # ---------------------------------------------
+
+    tenant_count = len(tenants)
+
 
     return render_template(
         "tenant_history.html",
         tenants=tenants,
-        search=search
+        search=search,
+        date_filter=date_filter,
+        selected_date=selected_date,
+        tenant_count=tenant_count
     )
 
 
-@tenants_bp.route("/add/<int:bed_id>", methods=["GET", "POST"])
+@tenants_bp.route(
+    "/add/<int:bed_id>",
+    methods=["GET", "POST"]
+)
 def add_tenant(bed_id):
-    bed = Bed.query.get_or_404(bed_id)
+
+    bed = Bed.query.get_or_404(
+        bed_id
+    )
 
     if bed.is_occupied:
-        return redirect(url_for("vacancies.vacancies"))
+
+        return redirect(
+            url_for(
+                "vacancies.vacancies"
+            )
+        )
+
 
     if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        phone = request.form.get("phone", "").strip()
+
+        name = request.form.get(
+            "name",
+            ""
+        ).strip()
+
+        phone = request.form.get(
+            "phone",
+            ""
+        ).strip()
+
 
         if not name or not phone:
+
             return render_template(
                 "tenant_form.html",
                 bed=bed,
                 error="Name and phone are required."
             )
+
 
         tenant = Tenant(
             name=name,
@@ -102,12 +233,20 @@ def add_tenant(bed_id):
             is_active=True
         )
 
+
         bed.is_occupied = True
 
         db.session.add(tenant)
+
         db.session.commit()
 
-        return redirect(url_for("vacancies.vacancies"))
+
+        return redirect(
+            url_for(
+                "vacancies.vacancies"
+            )
+        )
+
 
     return render_template(
         "tenant_form.html",
@@ -115,21 +254,44 @@ def add_tenant(bed_id):
     )
 
 
-@tenants_bp.route("/vacate/<int:tenant_id>", methods=["POST"])
+@tenants_bp.route(
+    "/vacate/<int:tenant_id>",
+    methods=["POST"]
+)
 def vacate_tenant(tenant_id):
-    tenant = Tenant.query.get_or_404(tenant_id)
+
+    tenant = Tenant.query.get_or_404(
+        tenant_id
+    )
+
 
     if not tenant.is_active:
-        return redirect(url_for("tenants.tenants"))
+
+        return redirect(
+            url_for(
+                "tenants.tenants"
+            )
+        )
+
 
     bed = tenant.bed
 
+
     if bed:
+
         bed.is_occupied = False
 
+
     tenant.vacating_date = date.today()
+
     tenant.is_active = False
+
 
     db.session.commit()
 
-    return redirect(url_for("tenants.tenants"))
+
+    return redirect(
+        url_for(
+            "tenants.tenants"
+        )
+    )

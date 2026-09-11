@@ -6,81 +6,261 @@
 
 <h2>Tenant History</h2>
 
-<p>Previous tenants who have vacated their beds.</p>
+<p>
+    Previous tenants who have vacated their beds.
+</p>
 
-<form method="GET" class="card">
 
-    <div class="form-group">
+<!-- Search and Date Filters -->
 
-        <label for="search">
-            Search Tenant
-        </label>
+<div class="card">
 
-        <input
-            type="text"
-            id="search"
-            name="search"
-            value="{{ search }}"
-            placeholder="Name, phone, PG or room number"
+    <form method="GET">
+
+
+        <!-- Tenant Search -->
+
+        <div class="form-group">
+
+            <label for="search">
+                Search Tenant
+            </label>
+
+            <input
+                type="text"
+                id="search"
+                name="search"
+                value="{{ search }}"
+                placeholder="Name, phone, PG or room number"
+            >
+
+        </div>
+
+
+        <!-- Date Filter -->
+
+        <div class="form-group">
+
+            <label for="date_filter">
+                Vacated Date
+            </label>
+
+            <select
+                id="date_filter"
+                name="date_filter"
+                onchange="toggleDatePicker()"
+            >
+
+                <option
+                    value="all"
+                    {% if date_filter == "all" %}
+                        selected
+                    {% endif %}
+                >
+                    All Dates
+                </option>
+
+
+                <option
+                    value="today"
+                    {% if date_filter == "today" %}
+                        selected
+                    {% endif %}
+                >
+                    Today
+                </option>
+
+
+                <option
+                    value="yesterday"
+                    {% if date_filter == "yesterday" %}
+                        selected
+                    {% endif %}
+                >
+                    Yesterday
+                </option>
+
+
+                <option
+                    value="selected"
+                    {% if date_filter == "selected" %}
+                        selected
+                    {% endif %}
+                >
+                    Select Date
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- Calendar -->
+
+        <div
+            id="selectedDateContainer"
+            class="form-group"
+            style="
+                display:
+                {% if date_filter == 'selected' %}
+                    block
+                {% else %}
+                    none
+                {% endif %};
+            "
         >
 
-    </div>
+            <label for="selected_date">
+                Select Date
+            </label>
 
-    <div class="page-actions">
+            <input
+                type="date"
+                id="selected_date"
+                name="selected_date"
+                value="{{ selected_date }}"
+            >
 
-        <button type="submit" class="btn btn-primary">
-            Search
-        </button>
+        </div>
 
-        <a
-            href="{{ url_for('tenants.tenant_history') }}"
-            class="btn btn-secondary"
-        >
-            Clear
-        </a>
 
-    </div>
+        <!-- Buttons -->
 
-</form>
+        <div class="page-actions">
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                Search
+            </button>
+
+
+            <a
+                href="{{ url_for('tenants.tenant_history') }}"
+                class="btn btn-secondary"
+            >
+                Clear
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- Result Count -->
+
+<div class="card">
+
+    {% if tenant_count == 1 %}
+
+        <strong>
+            1 tenant found
+        </strong>
+
+    {% else %}
+
+        <strong>
+            {{ tenant_count }} tenants found
+        </strong>
+
+    {% endif %}
+
+
+    {% if date_filter == "today" %}
+
+        <p style="margin-bottom: 0;">
+            Showing tenants who vacated today.
+        </p>
+
+
+    {% elif date_filter == "yesterday" %}
+
+        <p style="margin-bottom: 0;">
+            Showing tenants who vacated yesterday.
+        </p>
+
+
+    {% elif date_filter == "selected" and selected_date %}
+
+        <p style="margin-bottom: 0;">
+            Showing tenants who vacated on
+            <strong>{{ selected_date }}</strong>.
+        </p>
+
+    {% endif %}
+
+</div>
+
+
+<!-- Tenant Records -->
 
 {% if tenants %}
+
 
     {% for tenant in tenants %}
 
     <div class="card">
 
-        <h3>{{ tenant.name }}</h3>
+        <h3>
+            {{ tenant.name }}
+        </h3>
+
 
         <p>
-            Phone: {{ tenant.phone }}
+            Phone:
+            {{ tenant.phone }}
         </p>
+
 
         <p>
             PG:
             {{ tenant.pg_name if tenant.pg_name else '-' }}
         </p>
 
+
         <p>
             Joined:
-            {{ tenant.joining_date.strftime('%d-%m-%Y') if tenant.joining_date else '-' }}
+            {{
+                tenant.joining_date.strftime('%d-%m-%Y')
+                if tenant.joining_date
+                else '-'
+            }}
         </p>
+
 
         <p>
             Vacated:
-            {{ tenant.vacating_date.strftime('%d-%m-%Y') if tenant.vacating_date else '-' }}
+            {{
+                tenant.vacating_date.strftime('%d-%m-%Y')
+                if tenant.vacating_date
+                else '-'
+            }}
         </p>
+
 
         {% if tenant.bed %}
 
         <p>
-            Previous Room {{ tenant.bed.room.room_number }}
-            •
-            Previous Bed {{ tenant.bed.bed_number }}
-            •
+
+            Previous Room
+            {{ tenant.bed.room.room_number }}
+
+            &nbsp; • &nbsp;
+
+            Previous Bed
+            {{ tenant.bed.bed_number }}
+
+            &nbsp; • &nbsp;
+
             {{ tenant.bed.room.building.name }}
+
         </p>
 
         {% endif %}
+
 
         <span class="badge badge-vacant">
             VACATED
@@ -90,18 +270,98 @@
 
     {% endfor %}
 
+
 {% else %}
 
     <div class="empty-state">
 
-        <h3>No tenant history found</h3>
+        <h3>
+            No tenant history found
+        </h3>
 
-        <p>
-            Vacated tenants will appear here.
-        </p>
+
+        {% if date_filter == "today" %}
+
+            <p>
+                No tenants vacated today.
+            </p>
+
+
+        {% elif date_filter == "yesterday" %}
+
+            <p>
+                No tenants vacated yesterday.
+            </p>
+
+
+        {% elif date_filter == "selected" and selected_date %}
+
+            <p>
+                No tenants vacated on
+                {{ selected_date }}.
+            </p>
+
+
+        {% elif search %}
+
+            <p>
+                No previous tenant matches
+                "{{ search }}".
+            </p>
+
+
+        {% else %}
+
+            <p>
+                Vacated tenants will appear here.
+            </p>
+
+        {% endif %}
 
     </div>
 
 {% endif %}
+
+
+<script>
+
+function toggleDatePicker() {
+
+    const dateFilter =
+        document.getElementById(
+            "date_filter"
+        ).value;
+
+    const dateContainer =
+        document.getElementById(
+            "selectedDateContainer"
+        );
+
+    const dateInput =
+        document.getElementById(
+            "selected_date"
+        );
+
+
+    if (dateFilter === "selected") {
+
+        dateContainer.style.display =
+            "block";
+
+        dateInput.required = true;
+
+    } else {
+
+        dateContainer.style.display =
+            "none";
+
+        dateInput.required = false;
+
+    }
+
+}
+
+</script>
+
 
 {% endblock %}
