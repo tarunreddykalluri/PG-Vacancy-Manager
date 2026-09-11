@@ -198,3 +198,24 @@ p {
     cursor: not-allowed;
     pointer-events: none;
 }
+.delete-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+}
+
+.delete-modal-card {
+    max-width: 450px;
+    width: 100%;
+    margin: 0;
+    text-align: center;
+}
+
+.delete-warning {
+    color: #dc2626;
+}
